@@ -117,6 +117,8 @@ public class SubgraphEnumerationMainUsingArrayList {
 		      algorithm = new VariantSimpleSizeKUsingArrayList(enumeration.getGraph(),enumeration.getComponents(),k,enumeration.getSize(),time,outputFilePath);
 		else if(algorithmName.equals("TopDown"))
 			algorithm = new TopDownEnumerationSizeKUsingArrayList(enumeration.getGraph(),enumeration.getComponents(),k,enumeration.getSize(),time,outputFilePath);
+		else if(algorithmName.equals("KDelta"))
+			algorithm = new KDeltaDelayEnumeration(enumeration.getGraph(),enumeration.getComponents(),k,enumeration.getSize(),time,outputFilePath);
 		long startTime = System.currentTimeMillis();
 		algorithm.enumerate();
 		System.out.println("the number of enumerated subgraphs: " + algorithm.getCount());
