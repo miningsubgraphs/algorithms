@@ -41,8 +41,8 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
             T = new ArrayList<>();
             TB = new boolean[size + 1];
             // store the all forbidden vertices including two parts: 
-            //[0, F.size£¨£©-fNumber) are the neighbor vertices that can not be included.
-            //[F.size£¨£©-fNumber, F¡£size()-1] are the neighbor vertices that can be opened to visit one by one. 
+            //[0, F.sizeï¼ˆï¼‰-fNumber) are the neighbor vertices that can not be included.
+            //[F.sizeï¼ˆï¼‰-fNumber, Fã€‚size()-1] are the neighbor vertices that can be opened to visit one by one. 
             ArrayList<Integer> F = new ArrayList<>();
             // store the all neighbor vertices to be opened when a k-subgraph is found
             ArrayList<Integer> N = new ArrayList<>();
@@ -53,7 +53,7 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
                 S.add(v);
                 B[v] = true;
                 int fNumber = 0;
-                // add the vertices to forbiddenVertices as the set of vertices to be opened one by one
+                // add the vertices to the end of F as the set of vertices to be opened one by one
                 for (Integer u : graph[v]) {
                     if (!B[u]) {
                         F.add(u);
@@ -61,16 +61,16 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
                         fNumber++;
                     }
                 }
-                // expand the subgraph by adding neighbor vertices
+                // expand the subgraph by adding neighbor vertices, fNumber indicates the last fNumber vertices to be visited in F (the rest vertices in F are closed vertices).
                 extendSubgraph(S,  F,N, B, fNumber);
-                // restore the neighbors as the child recursion moved all the F[N.size()-fIndex,N.size()-1] to N
+                // restore the neighbors as the child recursion added all the F[N.size()-fNumber,N.size()-1] to N
                 while (fNumber>0) {
                 	B[N.remove(N.size()-1)] = false;
                     fNumber--;
                 }
                 // mark vertex v as a closed vertex as all the subgraphs containing v are already enumerated
                 F.add(v);
-                // restore the subgraph
+                // restore the subgraph by removing the last vertex v
                 S.remove(S.size() - 1);
                 // if the number of remain vertices <k, no need to enumerate
                 if(size-F.size()<k) {
@@ -83,8 +83,8 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
     }
 
     private boolean extendSubgraph(ArrayList<Integer> S, ArrayList<Integer> F,ArrayList<Integer> N, boolean[] B,int fNumber) {
-        // a tag indicating whether an interesting leaf exists
-        boolean hasInLeaf = false;
+        // a tag indicating whether a solution is found
+        boolean hasSolution = false;
         // a subgraph of size is found
         if (S.size() == k) {
             ++count;
@@ -102,7 +102,7 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
             for (int i = T.size() - 1; i >= 0; i--) {
                 TB[T.remove(i)] = false;
             }
-            hasInLeaf = true;
+            hasSolution = true;
         }
         // if the running time exceeds the given maximal time, then exits the algorithm.
         long currentTime = System.currentTimeMillis();
@@ -112,7 +112,7 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
             pw.close();
             System.exit(0);
         }
-        // F(F.size()-fNumber,F.size()-1] are the vertices can be opened one by one
+        // F(F.size()-fNumber,F.size()-1] are the open vertices that can be visited one by one
         for (int i = 0; i < fNumber; i++) {
             int u = F.remove(F.size()-1);
             S.add(u);
@@ -120,7 +120,7 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
             int fCount = 0;
             // the number of vertices added to N
             int nCount = 0;
-            // when the size of subgraph is smaller than k, we add its neighbor to F or N
+            // when the size of subgraph is smaller than k, we add the neighbors of the vertex v to F or N
             if(S.size()<k) {
               for (int v : graph[u]) {
                 if (!B[v]) {
@@ -138,7 +138,7 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
             }
             // moveCount records the number of vertices moved from N to F
             int moveCount = 0;
-            if (hasInLeaf&&S.size()<k) {
+            if (hasSolution&&S.size()<k) {
                 // move all the vertices from N to F
                 while(!N.isEmpty()) {
                 	Integer v = N.remove(N.size()-1);
@@ -146,25 +146,26 @@ public class KDeltaDelayEnumeration extends SubgraphEnumerationAlgorithmUsingArr
                 	moveCount++;
                 }
             }
-            // newFIndex: mark the new FIndex
+            // newFNumber: mark the new FNumber
             int newFNumber = fCount+moveCount;
             if (extendSubgraph(S, F, N, B, newFNumber)) {
-                hasInLeaf = true;
+                hasSolution = true;
             } else {
                 T.add(u);
                 TB[u] = true;
             }
+            // fCount is the number of vertices added to N in lines 127-130, nCount is the number of vertices added to N in lines 131-135
             int numberOfNeighbors = fCount+nCount;
-            // remove the added neighbor vertices of u
+            // remove the added neighbor vertices of u from N
             while (numberOfNeighbors > 0) {
             	B[N.remove(N.size()-1)] = false;
                 numberOfNeighbors--;
             }
-            // add u to N
+            // add u to the end of N
             N.add(u);
-            // restore S
+            // restore S by removing the last vertex u in S
             S.remove(S.size() - 1);
         }
-        return hasInLeaf;
+        return hasSolution;
     }
 }
